@@ -80,21 +80,39 @@ void I_O( vector<string>& args)
             close(fd);
         }
 
-        
-        if(cmd[0]=="echo")
+         string line="";
+            for(auto i :cmd)
+            {
+                line+=i+" ";
+            }
+
+        if(if_I_O(cmd)>0)
+        {
+            I_O(cmd);
+        }
+        else if(is_amp(cmd)>0)
+        {
+           foreground(line);
+        }
+         
+        else if(cmd[0]=="echo")
         {
           echo(cmd);
+        }
+        else if(cmd[0]=="pwd")
+        {
+            pwd();
         }
         else if((cmd[0]=="ls"))
         {
             ls(cmd);
         }
+        else if(cmd[0]=="pinfo")
+        {
+            pinfo(cmd);
+        }
         else{
-            string line="";
-            for(auto i :cmd)
-            {
-                line+=i+" ";
-            }
+           
             foreground(line);
         }
         exit(EXIT_SUCCESS);

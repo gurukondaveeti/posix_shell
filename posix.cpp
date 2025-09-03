@@ -4,7 +4,7 @@ using namespace std;
 
 string home_dir;
 string prev_dir;
-
+string op;
 
 vector<std::string> cmd_history;  
 
@@ -56,6 +56,7 @@ string cd(string cur_path,vector<string>&args)
         {
             prev_dir = cur_path; 
             return home_dir;
+            
         }
         else {
         target = args[1]; 
@@ -121,34 +122,28 @@ int main() {
         perror("gethostname"); //  the error message 
         return 1; // Return a non-zero value to indicate an error
     }
-     string op;
-
-    load_his();
-
+     
     char cwd1[1024];
-    getcwd(cwd1, sizeof(cwd1));
-    string cwds = string(cwd1);
-   
-      op=formatPath(cwds,home_dir);
-
-    cout << user_info->pw_name<< "@" << hostname << ":" << op << ">";
-
-    while(1){
-
-    
-
-     char cwd1[1024];
     getcwd(cwd1, sizeof(cwd1));
     string cwds = string(cwd1);
    
     op=formatPath(cwds,home_dir);
 
+    load_his();
+
+   
+    while(1){
+
     
+
+     
+
+    string lll=string(user_info->pw_name) + "@" + hostname + ":" + op + ">";
     
-    char *c=readline("");
+    char *c=readline(lll.c_str());
      if (c==NULL)
      {
-        cout<<endl;
+        
         break;
      } 
      if(strlen(c)==0)
@@ -217,7 +212,7 @@ int main() {
     
         
 
-    cout << user_info->pw_name<< "@" << hostname << ":" << op << ">";
+    // cout << user_info->pw_name<< "@" << hostname << ":" << op << ">";
 
      save_history();   
     

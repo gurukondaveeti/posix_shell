@@ -37,14 +37,14 @@ void load_his()
 void print_history(vector<std::string>& args)
 {
     int pointer=cmd_history.size()-1;
-    int start=0;
+    stack<string>s_h;
     if(args.size()==1)//print max 10
     {
         
         int count=10;
         while(pointer>=0&&count>=0)
         {
-            cout<<" "<<cmd_history[start++]<<endl;
+            s_h.push(cmd_history[pointer]);
             count--;pointer--;
         }
     }
@@ -54,9 +54,14 @@ void print_history(vector<std::string>& args)
         int maxcount=20;
          while(maxcount>=0&&count>=0&&pointer)
         {
-            cout<<" "<<cmd_history[start++]<<endl;
+            s_h.push(cmd_history[pointer]);
             count--;pointer--;
         }
 
+    }
+    while(!s_h.empty())
+    {
+        cout<<s_h.top()<<endl;
+        s_h.pop();
     }
 }

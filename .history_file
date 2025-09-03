@@ -1,9 +1,20 @@
+history
+ls -l
+history
 cd a1
 cd a1.1
+sort < file1.txt > lines_sorted.txt
 cd
+sort < file1.txt > lines_sorted.txt
+sort < file1.txt >> lines_sorted.txt
+cd ..
+cd ..
+cd ..
+cd
+cd a1
+cd a1.1
+cd ~
+history
+cd ..
 history
 history
-history
-history
-ls -l &
-sleep 10

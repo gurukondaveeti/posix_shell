@@ -44,3 +44,4 @@ void pinfo(vector<std::string>& args);
 void print_history(vector<std::string>& args);
 void load_his();
 void save_history();
+int is_amp(const vector<string>& tokens);
