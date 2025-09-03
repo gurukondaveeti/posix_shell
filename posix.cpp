@@ -5,6 +5,9 @@ using namespace std;
 string home_dir;
 string prev_dir;
 
+
+vector<std::string> cmd_history;  
+
 string formatPath(const string &cwds, const string &home_dir) {
     std::string op;
     if (cwds == home_dir) {
@@ -21,28 +24,19 @@ string formatPath(const string &cwds, const string &home_dir) {
 }
 
 
-vector<string> tokenize(const string &line) {
-    vector<string> tokens;
-    // Make a modifiable copy of input (strtok needs char*)
-    char* cstr = new char[line.size() + 1];
-    strcpy(cstr, line.c_str());
-
-
-    char* token = strtok(cstr, " \t");  // split on spaces & tabs
-
-    while (token != nullptr) {
-        tokens.push_back(string(token));
-        token = strtok(nullptr, " \t"); // keep splitting
+int is_amp(const vector<string>& tokens) {
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        if (tokens[i] == "&" || tokens[i] == "|") {
+            return i; 
+        }
     }
+    return -1; 
 
-    delete[] cstr;
-
-    return tokens;
 }
 
 string cd(string cur_path,vector<string>&args)
 {
-    char buf[200];
+    char buf[1024];
     string target;
 
     if (args.size() == 1) {
@@ -61,7 +55,7 @@ string cd(string cur_path,vector<string>&args)
         if(cur_path==home_dir)
         {
             prev_dir = cur_path; 
-            return "~";
+            return home_dir;
         }
         else {
         target = args[1]; 
@@ -94,10 +88,7 @@ string cd(string cur_path,vector<string>&args)
 
 
 
-
-
-
-void echo(vector<string>&token)
+void echo( vector<string>&token)
 {
     int n=token.size();
     for (int i=1;i<n;i++)
@@ -110,7 +101,7 @@ void echo(vector<string>&token)
 
 int main() {
    
-     char cwd[200];
+     char cwd[1024];
     getcwd(cwd, sizeof(cwd));
     home_dir = string(cwd);
     prev_dir=formatPath(cwd,home_dir);
@@ -125,14 +116,16 @@ int main() {
         return 1;
     }
 
-    char hostname[200];
+    char hostname[1024];
     if (gethostname(hostname, sizeof(hostname)) != 0) {  
-        perror("gethostname"); // perror() prints the error message for the last failed function call.
+        perror("gethostname"); //  the error message 
         return 1; // Return a non-zero value to indicate an error
     }
      string op;
 
-    char cwd1[200];
+    load_his();
+
+    char cwd1[1024];
     getcwd(cwd1, sizeof(cwd1));
     string cwds = string(cwd1);
    
@@ -142,9 +135,9 @@ int main() {
 
     while(1){
 
-    string line;
+    
 
-     char cwd1[200];
+     char cwd1[1024];
     getcwd(cwd1, sizeof(cwd1));
     string cwds = string(cwd1);
    
@@ -152,34 +145,81 @@ int main() {
 
     
     
-
-     if (!getline(cin, line))
+    char *c=readline("");
+     if (c==NULL)
      {
         cout<<endl;
         break;
      } 
+     if(strlen(c)==0)
+     {
+        cout << user_info->pw_name<< "@" << hostname << ":" << op << ">";
+
+        continue;
+     }
+
+     //--------------------------------------ading to history----------------------
+      string line(c);
+
+     if(strlen(c)>0)
+     {
+          add_history(c);
+        if (cmd_history.size() == 20) {
+            cmd_history.erase(cmd_history.begin());
+        }
+        cmd_history.push_back(line);
+     }
+     
+    
+     free(c);
+     //-------------------------------------history-----------------------
      vector<string> args = tokenize(line);
         if (args.empty()) continue;
 
         if (args[0] == "exit") break;
+
+        if(if_I_O(args)>0)
+        {
+            I_O(args);
+        }
+        else if(is_amp(args)>0)
+        {
+           foreground(line);
+        }
         else if(args[0]=="cd")
         {
            op= cd(cwds,args);
         }
+         
         else if(args[0]=="echo")
         {
           echo(args);
         }
+        else if(args[0]=="pwd")
+        {
+            pwd();
+        }
         else if((args[0]=="ls"))
         {
             ls(args);
+        }
+        else if(args[0]=="pinfo")
+        {
+            pinfo(args);
+        }
+        else if(args[0]=="history")
+        {
+            print_history(args);
+        }
+        else{
+            foreground(line);
         }
     
         
 
     cout << user_info->pw_name<< "@" << hostname << ":" << op << ">";
 
-        
+     save_history();   
     
     }    
     

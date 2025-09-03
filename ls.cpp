@@ -31,7 +31,7 @@ vector<string>flag_dir(bool &a,bool&l,vector<string>args)
 }
 
 
-void print_long_format(const string& full_path, const string& name) {
+void print_l(const string& full_path, const string& name) {
     struct stat file_stat;
     // Use lstat instead of stat to handle symbolic links correctly
     if (lstat(full_path.c_str(), &file_stat) == -1) {
@@ -106,7 +106,7 @@ void list_directory(const string& path, bool show_all, bool long_format,const st
         }
         if(long_format)
         {
-            print_long_format(dir_path, name);
+            print_l(dir_path, name);
         }
         // For now, we just print the name. We'll add -l logic next.
         cout << entry_name << endl;
@@ -147,7 +147,7 @@ void ls(const vector<string>& args) {
             } 
             else { // If the curr_dir is a file, not a directory
                 if (l_flag) {
-                    print_long_format(curr_dir, dir_path[i]);
+                    print_l(curr_dir, dir_path[i]);
                     cout << dir_path[i] << endl;
                 } else {
                     std::cout << dir_path[i] << std::endl;

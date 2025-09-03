@@ -1,0 +1,9 @@
+cd a1
+cd a1.1
+cd
+history
+history
+history
+history
+ls -l &
+sleep 10
