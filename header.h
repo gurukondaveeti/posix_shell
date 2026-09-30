@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <fcntl.h>
 #include <string> 
+#include <sys/stat.h>
+#include <queue>
+#include <signal.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <sys/wait.h>
@@ -16,11 +19,16 @@
 #include <pwd.h>        // for getpwuid() and struct passwd
 using namespace std;
 
-extern std::string home_dir;
-extern std::string prev_dir;
-extern std::vector<std::string> cmd_history;
+extern string home_dir;
+extern string prev_dir;
+extern vector<string> cmd_history;
+extern int fore_ground_pid;
+
+bool search(const string& root, const string& target) ;
 
 void pwd();
+
+void ctrl_c_z(int signal);
 
 string formatPath(const string &cwds, const string &home_dir);
 
@@ -45,3 +53,6 @@ void print_history(vector<std::string>& args);
 void load_his();
 void save_history();
 int is_amp(const vector<string>& tokens);
+void pipes(const vector<string> &args,int pos);
+int if_pipe(const vector<string>& tokens) ;
+vector <char *> str_to_cptr(vector<string> & args);

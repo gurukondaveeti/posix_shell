@@ -3,7 +3,7 @@ CXXFLAGS = -Wall -g -std=c++17
 LDLIBS = -lreadline 
 TARGET = my_shell
 
-SRCS = posix.cpp ls.cpp fg_bg.cpp tokanize.cpp I_O.cpp pwd_pinfo.cpp history.cpp # list all your .cpp files
+SRCS = posix.cpp ls.cpp pipes.cpp fg_bg.cpp tokanize.cpp I_O.cpp pwd_pinfo.cpp history.cpp search.cpp ctr_c_z.cpp# list all your .cpp files
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(TARGET)

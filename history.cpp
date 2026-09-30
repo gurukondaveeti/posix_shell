@@ -8,7 +8,7 @@ void save_history() {
     // Open in truncate mode to overwrite with the latest history
     ofstream history_file(his_filepath, std::ios::trunc);
     if (!history_file) {
-        cout << "Error: Could not open history file for writing." << endl;
+        cout << "not opening history file for writing." << endl;
         return;
     }
     for ( auto& cmd : cmd_history) {

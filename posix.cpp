@@ -68,7 +68,7 @@ string cd(string cur_path,vector<string>&args)
    
     string currentDir = cur_path;
 
-    // Try to change directory
+    //  changing directory
     if (chdir(target.c_str()) != 0) {
         perror("cd failed");
     } else {
@@ -98,7 +98,7 @@ void echo( vector<string>&token)
     }
     cout<<endl;
 }
-
+//
 
 int main() {
    
@@ -107,11 +107,11 @@ int main() {
     home_dir = string(cwd);
     prev_dir=formatPath(cwd,home_dir);
 
+    signal(SIGINT, ctrl_c_z);  // for Ctrl+C if given
+    signal(SIGTSTP, ctrl_c_z); // for Ctrl+Z if given
+
     
-
-
-    // Retrieve the password file entry for this user ID.
-    struct passwd *user_info = getpwuid(getuid());
+    struct passwd *user_info = getpwuid(getuid());//for password file
     if (user_info == NULL) {
         perror("getpwuid failed");
         return 1;
@@ -119,10 +119,9 @@ int main() {
 
     char hostname[1024];
     if (gethostname(hostname, sizeof(hostname)) != 0) {  
-        perror("gethostname"); //  the error message 
-        return 1; // Return a non-zero value to indicate an error
+        perror("gethostname"); //   error message 
+        return 1; 
     }
-     
     char cwd1[1024];
     getcwd(cwd1, sizeof(cwd1));
     string cwds = string(cwd1);
@@ -134,13 +133,9 @@ int main() {
    
     while(1){
 
+    string prompt=string(user_info->pw_name) + "@" + hostname + ":" + op + ">";
     
-
-     
-
-    string lll=string(user_info->pw_name) + "@" + hostname + ":" + op + ">";
-    
-    char *c=readline(lll.c_str());
+    char *c=readline(prompt.c_str());
      if (c==NULL)
      {
         
@@ -148,7 +143,7 @@ int main() {
      } 
      if(strlen(c)==0)
      {
-        cout << user_info->pw_name<< "@" << hostname << ":" << op << ">";
+        
 
         continue;
      }
@@ -168,12 +163,21 @@ int main() {
     
      free(c);
      //-------------------------------------history-----------------------
+     
+     char cwd1[1024];
+    getcwd(cwd1, sizeof(cwd1));
+    string cwds = string(cwd1);
+     
      vector<string> args = tokenize(line);
         if (args.empty()) continue;
 
         if (args[0] == "exit") break;
 
-        if(if_I_O(args)>0)
+        if(int pos=if_pipe(args)>0)
+        {
+            pipes(args,pos);
+        }
+        else if(if_I_O(args)>0)
         {
             I_O(args);
         }
@@ -205,6 +209,19 @@ int main() {
         else if(args[0]=="history")
         {
             print_history(args);
+        }
+         else if(args[0]=="search")
+        {
+            if(args.size()>2)
+            {
+                cout<<"arguments mismatch"<<endl;
+                break;
+            }
+            if(search(".",args[1]))
+            {
+                cout<<"True"<<endl;
+            }
+            else cout<<"False"<<endl;
         }
         else{
             foreground(line);

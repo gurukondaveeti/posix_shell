@@ -100,15 +100,15 @@ void list_directory(const string& path, bool show_all, bool long_format,const st
     while ((entry = readdir(dir)) != NULL) {
         string entry_name = entry->d_name;
 
-        // The `-a` flag logic: skip hidden files if `show_all` is false
-        if (!show_all && entry_name[0] == '.') {
+       
+        if (!show_all && entry_name[0] == '.') {  //dont show hidden files
             continue;
         }
         if(long_format)
         {
             print_l(dir_path, name);
         }
-        // For now, we just print the name. We'll add -l logic next.
+         
         cout << entry_name << endl;
     }
 
@@ -127,7 +127,7 @@ void ls(const vector<string>& args) {
         dir_path.push_back(".");
     }
 
-    // 2. Process each target
+    
     for (size_t i = 0; i < dir_path.size(); i++) {
         string curr_dir = dir_path[i];
         if (curr_dir == "~") 
@@ -135,7 +135,7 @@ void ls(const vector<string>& args) {
             curr_dir = home_dir;
         }
 
-        // If there are multiple dir_path, print the name of the directory
+        //  print the name of the directory if there are more no directories
         if (dir_path.size() > 1) {
             std::cout << dir_path[i] << ":" << std::endl;
         }
@@ -145,7 +145,7 @@ void ls(const vector<string>& args) {
             if (S_ISDIR(file_stat.st_mode)) {
                 list_directory(curr_dir, a_flag, l_flag, dir_path[i]);
             } 
-            else { // If the curr_dir is a file, not a directory
+            else {                                              // If the curr_dir is a file
                 if (l_flag) {
                     print_l(curr_dir, dir_path[i]);
                     cout << dir_path[i] << endl;
@@ -159,7 +159,7 @@ void ls(const vector<string>& args) {
         
         // Add a newline between listings for multiple dir_path
         if (i < dir_path.size() - 1) {
-            std::cout << std::endl;
+            cout << endl;
         }
     }
 }

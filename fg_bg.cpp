@@ -2,19 +2,19 @@
 
 
 
-
+int fore_ground_pid;
 
 void foreground(const string &line)
 {
     char* c_point_str = new char[line.size() + 1];
     strcpy(c_point_str, line.c_str());
-    vector<char*>args;
+    vector<char*>args;                          // converting to char *
     char* token= strtok(c_point_str," \t\n");
 
     while (token !=NULL)
     {
         args.push_back(token);
-        token=strtok(NULL," \t\n");
+        token=strtok(NULL," \t\n");         //move to next token
     }
     
     string last=string(args.back());
@@ -28,9 +28,12 @@ void foreground(const string &line)
             perror("fork failed");
             exit(EXIT_FAILURE);
         }
+        
         if (pid>0)
         {
-            waitpid(pid, &waitp, 0);
+            fore_ground_pid=pid;
+            waitpid(pid, &waitp, WUNTRACED);
+            fore_ground_pid=0;
         }
         if (pid==0)
         {
