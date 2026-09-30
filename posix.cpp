@@ -39,49 +39,47 @@ string cd(string cur_path,vector<string>&args)
     char buf[1024];
     string target;
 
+    if (args.size() > 2) {
+        cout << "Invalid arguments" << endl;
+        return formatPath(cur_path, home_dir);   // stay put, prompt shows the unchanged dir
+    }
+
     if (args.size() == 1) {
-       
+
         target =home_dir;
-    } 
-    else if (args[1] == "-") {   
-         
+    }
+    else if (args[1] == "-") {
+
         target= prev_dir;
-    } 
-    else if (args[1] == "~") {   
+    }
+    else if (args[1] == "~") {
         target =home_dir;
-    } 
-    else if(args[1] == "..")
-    {
-        if(cur_path==home_dir)
-        {
-            prev_dir = cur_path; 
-            return home_dir;
-            
-        }
-        else {
-        target = args[1]; 
-        }
     }
      else {
-        target = args[1]; 
+        // covers ".", "..", and any relative/absolute path -- chdir() below
+        // does the real work, so ".." doesn't need its own special case
+        // (it used to, and that special case never actually called chdir()
+        // when already at home_dir, so "cd .." from ~ did nothing at all)
+        target = args[1];
         }
-   
+
     string currentDir = cur_path;
 
     //  changing directory
     if (chdir(target.c_str()) != 0) {
         perror("cd failed");
+        return formatPath(cur_path, home_dir);   // failed: keep showing the old dir, not the bad target
     } else {
         prev_dir = currentDir;   // update previous dir only if success
 
         // After successful cd, print the new directory
         getcwd(buf, sizeof(buf)) ;
-            
+
             string cwds = string(buf);
             target=formatPath(cwds,home_dir);
-            
+
         }
-    
+
     return target;
 }
     
@@ -99,6 +97,78 @@ void echo( vector<string>&token)
     cout<<endl;
 }
 //
+
+// Runs exactly one command (everything main() used to do per readline() call).
+// Pulled out into its own function so a single input line can be split on
+// ';' and each piece run through the same dispatch logic. Returns false to
+// mean "the user typed exit", which tells main() to stop the shell.
+bool execute_line(const string &line)
+{
+    char cwd1[1024];
+    getcwd(cwd1, sizeof(cwd1));
+    string cwds = string(cwd1);
+
+    vector<string> args = tokenize(line);
+    if (args.empty()) return true;
+
+    if (args[0] == "exit") return false;
+
+    int pipe_pos = if_pipe(args);   // was "int pos = if_pipe(args) > 0" -- that
+    if (pipe_pos > 0)               // stored the boolean, not the real index
+    {
+        pipes(args,pipe_pos);
+    }
+    else if(if_I_O(args)>0)
+    {
+        I_O(args);
+    }
+    else if(is_amp(args)>0)
+    {
+       foreground(line);
+    }
+    else if(args[0]=="cd")
+    {
+       op= cd(cwds,args);
+    }
+
+    else if(args[0]=="echo")
+    {
+      echo(args);
+    }
+    else if(args[0]=="pwd")
+    {
+        pwd();
+    }
+    else if((args[0]=="ls"))
+    {
+        ls(args);
+    }
+    else if(args[0]=="pinfo")
+    {
+        pinfo(args);
+    }
+    else if(args[0]=="history")
+    {
+        print_history(args);
+    }
+     else if(args[0]=="search")
+    {
+        if(args.size()!=2)   // covers both too many args AND a missing one
+        {                     // (used to be args.size()>2, then read args[1]
+            cout<<"arguments mismatch"<<endl;   // unconditionally below -- UB
+        }                                        // when search was called bare)
+        else if(search(".",args[1]))
+        {
+            cout<<"True"<<endl;
+        }
+        else cout<<"False"<<endl;
+    }
+    else{
+        foreground(line);
+    }
+
+    return true;
+}
 
 int main() {
    
@@ -163,77 +233,25 @@ int main() {
     
      free(c);
      //-------------------------------------history-----------------------
-     
-     char cwd1[1024];
-    getcwd(cwd1, sizeof(cwd1));
-    string cwds = string(cwd1);
-     
-     vector<string> args = tokenize(line);
-        if (args.empty()) continue;
 
-        if (args[0] == "exit") break;
-
-        if(int pos=if_pipe(args)>0)
+     //----------------- semicolon separated list of commands -------------
+     bool keep_running = true;
+     for (string segment : split_semicolons(line))
+     {
+        if (!execute_line(segment))
         {
-            pipes(args,pos);
+            keep_running = false;   // "exit" was one of the ';'-separated commands
+            break;
         }
-        else if(if_I_O(args)>0)
-        {
-            I_O(args);
-        }
-        else if(is_amp(args)>0)
-        {
-           foreground(line);
-        }
-        else if(args[0]=="cd")
-        {
-           op= cd(cwds,args);
-        }
-         
-        else if(args[0]=="echo")
-        {
-          echo(args);
-        }
-        else if(args[0]=="pwd")
-        {
-            pwd();
-        }
-        else if((args[0]=="ls"))
-        {
-            ls(args);
-        }
-        else if(args[0]=="pinfo")
-        {
-            pinfo(args);
-        }
-        else if(args[0]=="history")
-        {
-            print_history(args);
-        }
-         else if(args[0]=="search")
-        {
-            if(args.size()>2)
-            {
-                cout<<"arguments mismatch"<<endl;
-                break;
-            }
-            if(search(".",args[1]))
-            {
-                cout<<"True"<<endl;
-            }
-            else cout<<"False"<<endl;
-        }
-        else{
-            foreground(line);
-        }
-    
-        
+     }
+     if (!keep_running) break;
+    //-----------------------------------------------------------------
 
     // cout << user_info->pw_name<< "@" << hostname << ":" << op << ">";
 
-     save_history();   
-    
-    }    
+     save_history();
+
+    }
     
     return 0;
 }
