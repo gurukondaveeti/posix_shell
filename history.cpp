@@ -1,8 +1,18 @@
 #include "header.h"
-#include "header.h"
 
 
-string his_filepath= ".history_file";
+// Was a plain relative ".history_file" -- re-opened relative to whatever the
+// CURRENT directory happened to be (save_history() runs after every command,
+// so a single `cd` mid-session made it start writing somewhere else
+// entirely). Anchoring it to $HOME makes "persists across sessions" actually
+// true regardless of where the shell is launched from or cd'd to.
+static string compute_history_path() {
+    const char* h = getenv("HOME");
+    if (h) return string(h) + "/.history_file";
+    return ".history_file";   // fallback if $HOME is somehow unset
+}
+
+string his_filepath = compute_history_path();
 
 void save_history() {
     // Open in truncate mode to overwrite with the latest history
@@ -40,8 +50,9 @@ void print_history(vector<std::string>& args)
     stack<string>s_h;
     if(args.size()==1)//print max 10
     {
-        
-        int count=10;
+
+        int count=9;   // was 10 -- "count>=0" below already runs 0..count
+                       // inclusive, so starting at 10 printed 11 lines
         while(pointer>=0&&count>=0)
         {
             s_h.push(cmd_history[pointer]);
@@ -50,11 +61,19 @@ void print_history(vector<std::string>& args)
     }
     if(args.size()==2)
     {
-        int count=stoi(args[1]);
+        bool numeric = !args[1].empty();
+        for (char c : args[1]) {
+            if (!isdigit((unsigned char)c)) { numeric = false; break; }
+        }
+        if (!numeric) {
+            cout << "history: numeric argument required" << endl;
+            return;
+        }
+        int count=stoi(args[1])-1;   // -1 to match the "0..count inclusive" loop below
         int maxcount=20;
-         while(maxcount>=0&&count>=0&&pointer)
-        {
-            s_h.push(cmd_history[pointer]);
+         while(maxcount>=0&&count>=0&&pointer>=0)   // was just "pointer", which is
+        {                                            // false at index 0 -- the oldest
+            s_h.push(cmd_history[pointer]);           // command could never be shown
             count--;pointer--;
         }
 

@@ -40,6 +40,13 @@ void foreground(const string &line)
             if(!args.empty())
             {
                 execvp(args[0],args.data());
+                // execvp() only returns on failure. Without this, a bad
+                // command (e.g. a typo, or the semicolon-parsing bug that
+                // used to send "pwd;pwd" here as one word) left this forked
+                // child falling through and running on as a second, rogue
+                // copy of the whole shell, sharing the same terminal.
+                perror(args[0]);
+                exit(EXIT_FAILURE);
             }
         }
     }

@@ -26,6 +26,16 @@ void pinfo(vector<std::string>& args)
     pid=getpid();
  }
  else{
+    // args[1] used to go straight into stoi() -- "pinfo abc" threw an
+    // uncaught exception and crashed the whole shell. Validate first.
+    bool numeric = !args[1].empty();
+    for (char c : args[1]) {
+        if (!isdigit((unsigned char)c)) { numeric = false; break; }
+    }
+    if (!numeric) {
+        cout << "pinfo: invalid pid" << endl;
+        return;
+    }
     pid=stoi(args[1]);
  }
   string value;
@@ -37,7 +47,7 @@ if (!valid) {
         cout << "process with PID : " << pid << " not found." << endl;
         return;
     }
-    int pgrp ;
+    int pgrp = 0;   // was uninitialized -- stayed garbage if field 5 was never reached
     string line;
  if (getline(stat_file, line)) {
         
@@ -56,8 +66,12 @@ if (!valid) {
             if (i == 3) {  // 3rd field is process state
                 res.status = token[0];
             }
-            if (i == 23) {  // 23rd field is virtual memory size
-                res.vm_size=token;
+            if (i == 23) {  // 23rd field is virtual memory size, in BYTES.
+                // Was stored as-is, which is ~1024x too large compared to the
+                // assignment's example (and to /proc/pid/status's VmSize,
+                // which is already in KB) -- convert to KB to match.
+                long vsize_bytes = atol(token);
+                res.vm_size = to_string(vsize_bytes / 1024);
             }
             if (i == 5)  pgrp = stoi(token);//process group ID
             token = strtok(NULL, " ");//moving to next token
