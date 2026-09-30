@@ -18,29 +18,36 @@ void I_O( vector<string>& args)
     bool append = false;
 
    for (size_t i = 0; i < args.size(); ++i) {
-        if (args[i] == "<") 
+        // Each branch used to do args[i+1] with no bounds check -- a
+        // trailing "<"/">"/">>" with nothing after it (e.g. "echo hi >")
+        // read past the end of the vector.
+        if (args[i] == "<")
         {
+            if (i+1 >= args.size()) { cout << "syntax error: expected filename after <" << endl; return; }
             input_file = args[i+1];
             i++;
         }
 
-        else if (args[i] == ">") 
+        else if (args[i] == ">")
         {
+            if (i+1 >= args.size()) { cout << "syntax error: expected filename after >" << endl; return; }
             output_file = args[i+1];
             i++;
         }
         else if (args[i] == ">>")
          {
+            if (i+1 >= args.size()) { cout << "syntax error: expected filename after >>" << endl; return; }
             output_file = args[i+1];
             i++;
             append = true;
         }
-        else 
+        else
         {
             cmd.push_back(args[i]);
         }
 
     }
+    if (cmd.empty()) { cout << "syntax error: no command given" << endl; return; }
 
 
      int pid = fork();
@@ -111,8 +118,24 @@ void I_O( vector<string>& args)
         {
             pinfo(cmd);
         }
+        else if(cmd[0]=="history")   // was missing -- "history > out.txt" fell
+        {                             // through to foreground() and failed
+            print_history(cmd);
+        }
+        else if(cmd[0]=="search")   // was missing, same reason
+        {
+            if(cmd.size()!=2)
+            {
+                cout<<"arguments mismatch"<<endl;
+            }
+            else if(search(".",cmd[1]))
+            {
+                cout<<"True"<<endl;
+            }
+            else cout<<"False"<<endl;
+        }
         else{
-           
+
             foreground(line);
         }
         exit(EXIT_SUCCESS);
