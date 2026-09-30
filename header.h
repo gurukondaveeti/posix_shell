@@ -1,3 +1,4 @@
+#pragma once
 #include <stdio.h>
 #include<bits/stdc++.h>
 #include <iostream>
@@ -33,6 +34,10 @@ void ctrl_c_z(int signal);
 string formatPath(const string &cwds, const string &home_dir);
 
 vector<string> tokenize(const string &line);
+
+vector<string> split_semicolons(const string &line);
+
+bool execute_line(const string &line);
 
 string cd(string cur_path,vector<string>&args);
 
