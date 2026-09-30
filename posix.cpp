@@ -170,7 +170,78 @@ bool execute_line(const string &line)
     return true;
 }
 
+// -------------------- command-name TAB completion --------------------
+// Readline already completes file/directory names for free (its default
+// completer). What it doesn't know about is OUR commands -- builtins plus
+// anything in $PATH -- so "ec<TAB>" did nothing but beep. A generator
+// function (readline's iterator pattern: called repeatedly with state==0
+// the first time, then increasing state, until it returns NULL) plus one
+// "attempted completion" function that only kicks in for the first word on
+// the line is all readline needs to hand this over to us.
+
+char *command_generator(const char *text, int state)
+{
+    static vector<string> matches;
+    static size_t idx;
+
+    if (state == 0) {
+        matches.clear();
+        idx = 0;
+        size_t len = strlen(text);
+
+        string builtins[] = {"cd","echo","pwd","ls","pinfo","search","history","exit"};
+        for (const string &b : builtins) {
+            if (b.compare(0, len, text) == 0) matches.push_back(b);
+        }
+
+        const char *path_env = getenv("PATH");
+        if (path_env) {
+            string path(path_env);
+            size_t start_i = 0;
+            while (start_i <= path.size()) {
+                size_t colon = path.find(':', start_i);
+                if (colon == string::npos) colon = path.size();
+                string dir = path.substr(start_i, colon - start_i);
+
+                DIR *dp = opendir(dir.c_str());
+                if (dp) {
+                    struct dirent *de;
+                    while ((de = readdir(dp)) != NULL) {
+                        string name = de->d_name;
+                        if (name.compare(0, len, text) == 0 &&
+                            access((dir + "/" + name).c_str(), X_OK) == 0) {
+                            matches.push_back(name);
+                        }
+                    }
+                    closedir(dp);
+                }
+                start_i = colon + 1;
+            }
+        }
+
+        sort(matches.begin(), matches.end());
+        matches.erase(unique(matches.begin(), matches.end()), matches.end());
+    }
+
+    if (idx < matches.size()) {
+        return strdup(matches[idx++].c_str());   // readline free()s this itself
+    }
+    return NULL;
+}
+
+char **command_completion(const char *text, int start, int end)
+{
+    (void)end;
+    if (start != 0) return NULL;   // not the first word -- fall back to readline's own filename completion
+
+    rl_attempted_completion_over = 1;   // don't ALSO try filename completion for word 1
+    return rl_completion_matches(text, command_generator);
+}
+// -----------------------------------------------------------------------
+
 int main() {
+    rl_attempted_completion_function = command_completion;
+
    
      char cwd[1024];
     getcwd(cwd, sizeof(cwd));

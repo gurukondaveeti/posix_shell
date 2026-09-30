@@ -16,8 +16,10 @@ This shell was built with a modular design, separating parsing, execution, and b
 
 ### Core Shell Functionality
 * **Dynamic Prompt**: A dynamic prompt is displayed in the familiar `username@system_name:current_directory>` format. It updates automatically when the directory changes, and the home directory is represented by `~`.
-* **Command Parsing**: The shell correctly parses complex user input, handling multiple commands on one line separated by semicolons (`;`) and ignoring extraneous spaces or tabs.
-* **GNU Readline Integration**: To provide a professional user experience, the shell is built using the GNU Readline library. This enables advanced line editing (e.g., using arrow keys to move the cursor) and is the foundation for the history feature.
+* **Command Parsing**: The shell correctly parses complex user input, handling multiple commands on one line separated by semicolons (`;`) and ignoring extraneous spaces or tabs. Semicolon splitting uses `strtok` on the raw line (see `split_semicolons` in `tokanize.cpp`), the same way `tokenize()` already split on whitespace.
+* **GNU Readline Integration**: To provide a professional user experience, the shell is built using the GNU Readline library. This enables advanced line editing (e.g., using arrow keys to move the cursor) and is the foundation for the history feature. Readline's default completer already handles file/directory names for free; a custom `rl_attempted_completion_function` (`command_generator`/`command_completion` in `posix.cpp`) additionally completes **command names** -- builtins plus everything executable in `$PATH` -- when TAB is pressed on the first word of the line.
+
+* **Pipelines**: Any number of commands can be chained with `|` (not just two), e.g. `cat file.txt | sort | head -3`. Each stage can carry its own `<`/`>`/`>>` redirection, so redirection combined with a pipeline works too (`ls | grep ".txt" > out.txt`). Builtins used as one stage of a pipeline (e.g. `history | grep ls`) are called directly in that stage's forked process rather than exec'd.
 
 ### Process Management
 The shell can create and manage child processes to execute commands.
@@ -134,7 +136,7 @@ The project is organized into several files, each responsible for a specific mod
 * **`I_O.cpp`**: Implements the functions for handling I/O redirection.
 * **`ls.cpp`**: Contains the custom implementation of the `ls` command.
 * **`search.cpp`**: Contains the implementation for the `search` command.
-* **`signals.cpp`**: Contains the signal handler functions.
-* **`history.cpp`**: Contains the history storage  functions.
-* **`ctrl_c_z.cpp`**: Contains the signal function.
+* **`pipes.cpp`**: Splits a pipeline into stages, wires them together with `pipe()`/`dup2()`, and runs each one (builtin or `execvp`).
+* **`history.cpp`**: Contains the history storage functions. History is kept at `$HOME/.history_file` so it survives regardless of which directory the shell is launched from.
+* **`ctr_c_z.cpp`**: Contains the `SIGINT`/`SIGTSTP` handler (`ctrl_c_z`) and the `string vector -> char* vector` helper (`str_to_cptr`) used when exec'ing.
 * **`pwd_pinfo.cpp`**: Contains the pwd and pinfo functions.
