@@ -65,7 +65,7 @@ cout << " ";  // space after permissions
     // 3. Owner and Group Name
     struct passwd *pw = getpwuid(file_stat.st_uid);
     struct group *gr = getgrgid(file_stat.st_gid);
-    cout << pw->pw_name << " " << gr->gr_name << " ";
+    cout << (pw ? pw->pw_name : "?") << " " << (gr ? gr->gr_name : "?") << " ";
 
     // 4. Size
     cout << file_stat.st_size << " ";
@@ -106,9 +106,13 @@ void list_directory(const string& path, bool show_all, bool long_format,const st
         }
         if(long_format)
         {
-            print_l(dir_path, name);
+            // was print_l(dir_path, name) -- that stat'd the DIRECTORY itself
+            // on every iteration, so every row showed the same "d...", the
+            // folder's own size/owner, never the individual entry's.
+            string entry_path = dir_path + "/" + entry_name;
+            print_l(entry_path, entry_name);
         }
-         
+
         cout << entry_name << endl;
     }
 
